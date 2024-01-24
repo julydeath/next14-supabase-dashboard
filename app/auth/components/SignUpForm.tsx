@@ -1,5 +1,6 @@
 "use client";
 
+import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -27,10 +28,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 import * as z from "zod";
 import { useForm } from "react-hook-form";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
+import { createMember } from "../actions";
 
 const formSchema = z
   .object({
@@ -54,13 +58,19 @@ export default function Signup() {
       username: "",
       email: "",
       password: "",
-      confirm: "",
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-  }
+  const [isPending, startTransition] = useTransition();
+
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
+    startTransition(async () => {
+      await createMember({
+        email: values.email,
+        password: values.password,
+      });
+    });
+  };
 
   return (
     <div className="flex items-center justify-center h-screen">
@@ -69,34 +79,12 @@ export default function Signup() {
           <CardTitle>create your account</CardTitle>
           <CardDescription className="pt-1">
             Have an account?
-            <Link className="text-blue-400" href="/auth/login">
+            <Link className="text-blue-400 pl-1" href="/auth/login">
               login here
             </Link>
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* <form>
-          <div className="grid w-full items-center gap-4">
-            <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" placeholder="Name of your project" />
-            </div>
-            <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="framework">Framework</Label>
-              <Select>
-                <SelectTrigger id="framework">
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent position="popper">
-                  <SelectItem value="next">Next.js</SelectItem>
-                  <SelectItem value="sveltekit">SvelteKit</SelectItem>
-                  <SelectItem value="astro">Astro</SelectItem>
-                  <SelectItem value="nuxt">Nuxt.js</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </form> */}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <FormField
@@ -159,7 +147,12 @@ export default function Signup() {
                   </FormItem>
                 )}
               />
-              <Button type="submit">create account</Button>
+              <Button type="submit">
+                create account{" "}
+                <AiOutlineLoading3Quarters
+                  className={cn("animate-spin", { hidden: !isPending })}
+                />
+              </Button>
             </form>
           </Form>
         </CardContent>
